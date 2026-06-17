@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>3iDeas Challenge</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html,body{width:100%;height:100%;overflow:hidden;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none}#wrap{position:fixed;inset:0;display:flex;flex-direction:column;background:radial-gradient(circle at top,#2a2408 0,#080808 42%,#000 100%)}.top{height:70px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#000;border-bottom:1px solid #f5c51855}.brandLogo{font-weight:900;font-size:25px;letter-spacing:-1px}.y{color:#f5c518}.w{color:#fff}.mini{font-size:11px;color:#f5c518}.hud{text-align:right;font-weight:800}.hud small{display:block;font-size:10px;color:#aaa}.hud span{font-size:18px}canvas{flex:1;width:100%;height:100%;display:block}.bar{height:34px;padding:5px 16px;background:#000;border-top:1px solid #f5c51844}.power{height:8px;background:#222;border-radius:20px;overflow:hidden}.fill{height:100%;width:100%;background:#f5c518;box-shadow:0 0 12px #f5c518}.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:linear-gradient(#050505ee,#000000f8);z-index:4}.hidden{display:none}.bigLogo{line-height:.9;margin-bottom:8px}.bulb{width:74px;height:94px;margin:0 auto 12px;position:relative}.bulb:before{content:"";position:absolute;left:7px;top:0;width:42px;height:64px;background:#f5c518;border-radius:50% 50% 8px 50%;box-shadow:0 0 28px #f5c51855}.bulb:after{content:"";position:absolute;left:25px;bottom:0;width:28px;height:20px;border-top:5px solid #fff;border-bottom:5px solid #fff;opacity:.9}.logoText{font-size:58px;font-weight:900;letter-spacing:-3px}.slogan{color:#f5c518;margin:8px 0 18px;font-size:18px}.info{font-size:14px;line-height:1.65;color:#ddd;margin:12px 0 22px;max-width:360px}.btn{border:0;border-radius:14px;padding:15px 28px;background:#f5c518;color:#080808;font-size:18px;font-weight:900;box-shadow:0 0 25px #f5c51866;margin:7px}.btn2{background:#202020;color:#fff;border:1px solid #f5c51866}.endScore{font-size:62px;font-weight:900;color:#f5c518;margin:8px}.coupon{border:1px dashed #f5c518;border-radius:14px;padding:12px;margin:14px 0;color:#f5c518;max-width:310px}.hint{position:absolute;bottom:46px;left:0;right:0;text-align:center;color:#999;font-size:12px;z-index:2;pointer-events:none}.level{position:absolute;top:82px;left:0;right:0;text-align:center;color:#f5c51899;font-size:12px;letter-spacing:.12em;z-index:2;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="top">
+    <div><div class="brandLogo"><span class="y">3</span><span class="w">i</span><span class="y">D</span><span class="w">eas</span></div><div class="mini">Challenge · Grabamos identidad</div></div>
+    <div class="hud"><small>PUNTOS</small><span id="score">0</span><small>VIDAS <span id="lives">❤❤❤</span></small></div>
+  </div>
+  <div id="levelText" class="level hidden">NIVEL 1</div>
+  <canvas id="game"></canvas>
+  <div class="bar"><div class="mini">POTENCIA LÁSER</div><div class="power"><div id="fill" class="fill"></div></div></div>
+  <div id="start" class="screen">
+    <div class="bigLogo"><div class="bulb"></div><div class="logoText"><span class="y">3</span><span class="w">i</span><span class="y">D</span><span class="w">eas</span></div></div>
+    <div class="slogan">Challenge</div>
+    <div class="info">Tocá mates, termos, botellas y bombillas antes de que escapen.<br><b>Si cae el logo 3iDeas, agarralo rápido: vale +100.</b><br><br>San José de la Esquina · Santa Fe<br>📞 3467 631848 · 📸 @3ideasjg</div>
+    <button class="btn" id="playBtn">▶ JUGAR</button>
+  </div>
+  <div id="over" class="screen hidden">
+    <div class="logoText"><span class="y">3</span><span class="w">i</span><span class="y">D</span><span class="w">eas</span></div>
+    <h1>GAME OVER</h1>
+    <div id="final" class="endScore">0</div>
+    <div id="best">Récord: 0</div>
+    <div class="coupon">🎁 Superá los 1000 puntos y reclamá tu premio sorpresa</div>
+    <div class="info">3iDeas · Grabamos identidad<br>San José de la Esquina, Santa Fe<br>📞 3467 631848 · 📸 @3ideasjg</div>
+    <button class="btn" id="againBtn">↻ JUGAR DE NUEVO</button>
+    <button class="btn btn2" id="shareBtn">Compartir WhatsApp</button>
+  </div>
+  <div id="hint" class="hint hidden">Tocá los objetos antes de que lleguen abajo</div>
+</div>
+<script>
+(function(){
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const start=document.getElementById('start'),over=document.getElementById('over'),hint=document.getElementById('hint'),levelText=document.getElementById('levelText');
+const scoreEl=document.getElementById('score'),livesEl=document.getElementById('lives'),fill=document.getElementById('fill');
+let W=0,H=0,items=[],parts=[],texts=[],score=0,lives=3,power=100,last=0,spawnMs=0,running=false,raf=0,best=Number(localStorage.getItem('ideasBestV2')||0),logoMs=0,lastTap=0;
+function resize(){W=innerWidth;H=Math.max(260,innerHeight-104);const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.floor(W*d);canvas.height=Math.floor(H*d);canvas.style.height=H+'px';ctx.setTransform(d,0,0,d,0,0)}addEventListener('resize',resize,{passive:true});resize();
+function rnd(a,b){return a+Math.random()*(b-a)}
+function level(){return Math.min(9,1+Math.floor(score/180))}
+function spawnItem(special=false){const types=['mate','termo','botella','vaso','bombilla'];const type=special?'logo':types[(Math.random()*types.length)|0];const lvl=level();const r=type==='logo'?26:rnd(17,23);const base=type==='logo'?4.8:rnd(1.05,1.65);const speed=base+(lvl-1)*0.23;items.push({type,x:rnd(r+8,W-r-8),y:-r-10,r,s:speed,rot:0,alive:true})}
+function drawMate(p){const k=p.r/22;ctx.fillStyle='#0b0b0b';ctx.strokeStyle='#ddd';ctx.lineWidth=2.4*k;ctx.beginPath();ctx.ellipse(p.x,p.y,20*k,24*k,0,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#c7c7c7';ctx.beginPath();ctx.ellipse(p.x,p.y-18*k,23*k,7*k,0,0,7);ctx.fill()}
+function drawTermo(p){const k=p.r/22;ctx.fillStyle='#101010';ctx.strokeStyle='#bdbdbd';ctx.lineWidth=2.4*k;roundRect(p.x-12*k,p.y-30*k,24*k,60*k,7*k);ctx.fill();ctx.stroke();ctx.fillStyle='#cfcfcf';ctx.fillRect(p.x-7*k,p.y-38*k,14*k,9*k)}
+function drawBotella(p){const k=p.r/22;ctx.fillStyle='#0f0f0f';ctx.strokeStyle='#e6e6e6';ctx.lineWidth=2.4*k;roundRect(p.x-11*k,p.y-31*k,22*k,62*k,12*k);ctx.fill();ctx.stroke();ctx.fillStyle='#bbb';ctx.fillRect(p.x-6*k,p.y-40*k,12*k,11*k)}
+function drawVaso(p){const k=p.r/22;ctx.fillStyle='#111';ctx.strokeStyle='#eee';ctx.lineWidth=2.4*k;ctx.beginPath();ctx.moveTo(p.x-18*k,p.y-24*k);ctx.lineTo(p.x+18*k,p.y-24*k);ctx.lineTo(p.x+13*k,p.y+27*k);ctx.lineTo(p.x-13*k,p.y+27*k);ctx.closePath();ctx.fill();ctx.stroke()}
+function drawBombilla(p){const k=p.r/22;ctx.strokeStyle='#eee';ctx.lineWidth=4.5*k;ctx.beginPath();ctx.moveTo(p.x-4*k,p.y+29*k);ctx.quadraticCurveTo(p.x+8*k,p.y,p.x-8*k,p.y-32*k);ctx.stroke();ctx.fillStyle='#f5c518';ctx.beginPath();ctx.arc(p.x+1*k,p.y-8*k,5*k,0,7);ctx.fill()}
+function drawLogo(p){ctx.save();ctx.shadowColor='#f5c518';ctx.shadowBlur=24;ctx.font='900 '+(p.r*1.45)+'px Arial';ctx.textAlign='center';ctx.fillStyle='#f5c518';ctx.fillText('3',p.x-p.r*.44,p.y);ctx.fillStyle='#fff';ctx.fillText('i',p.x-p.r*.05,p.y);ctx.fillStyle='#f5c518';ctx.fillText('D',p.x+p.r*.35,p.y);ctx.font='900 '+(p.r*.9)+'px Arial';ctx.fillStyle='#fff';ctx.fillText('eas',p.x+p.r*.86,p.y+p.r*.03);ctx.restore()}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y)}
+function drawItem(p){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.translate(-p.x,-p.y);if(p.type==='mate')drawMate(p);if(p.type==='termo')drawTermo(p);if(p.type==='botella')drawBotella(p);if(p.type==='vaso')drawVaso(p);if(p.type==='bombilla')drawBombilla(p);if(p.type==='logo')drawLogo(p);ctx.restore()}
+function boom(x,y,color,txt){while(parts.length>90)parts.shift();while(texts.length>8)texts.shift();for(let i=0;i<12;i++)parts.push({x,y,vx:rnd(-3.2,3.2),vy:rnd(-4,2.5),life:1,c:color});texts.push({x,y,t:txt,life:1,c:color})}
+function tap(e){if(!running)return;e.preventDefault();const now=performance.now();if(now-lastTap<35)return;lastTap=now;const rect=canvas.getBoundingClientRect();const x=(e.clientX||0)-rect.left,y=(e.clientY||0)-rect.top;for(let i=items.length-1;i>=0;i--){const p=items[i];if(Math.hypot(x-p.x,y-p.y)<p.r*1.65){const pts=p.type==='logo'?100:(p.type==='bombilla'?50:20);score+=pts;power=Math.min(100,power+8);boom(p.x,p.y,p.type==='logo'?'#f5c518':'#fff',p.type==='logo'?'¡IDEA CAPTURADA!':'+'+pts);items.splice(i,1);hud();return}}power=Math.max(0,power-8);boom(x,y,'#ff4444','MISS');hud()}
+canvas.addEventListener('pointerdown',tap,{passive:false});
+function hud(){scoreEl.textContent=score;livesEl.textContent='❤'.repeat(Math.max(0,lives));fill.style.width=power+'%';levelText.textContent='NIVEL '+level()}
+function loop(t){if(!running)return;let dt=Math.min(t-last,50);last=t;spawnMs+=dt;logoMs+=dt;const lvl=level();const interval=Math.max(560,1350-(lvl-1)*105);if(spawnMs>interval){spawnMs=0;spawnItem(false);if(lvl>3&&Math.random()<.18)spawnItem(false)}if(logoMs>16000){logoMs=0;spawnItem(true)}ctx.clearRect(0,0,W,H);ctx.strokeStyle='#f5c51812';for(let x=0;x<W;x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}ctx.globalAlpha=.075;ctx.font='900 '+Math.min(68,W/5)+'px Arial';ctx.textAlign='center';ctx.fillStyle='#f5c518';ctx.fillText('3',W/2-55,H/2);ctx.fillStyle='#fff';ctx.fillText('i',W/2-25,H/2);ctx.fillStyle='#f5c518';ctx.fillText('D',W/2+15,H/2);ctx.fillStyle='#fff';ctx.fillText('eas',W/2+75,H/2);ctx.globalAlpha=1;for(let i=items.length-1;i>=0;i--){const p=items[i];p.y+=p.s*(dt/16.67);p.rot+=0.01*(dt/16.67);drawItem(p);if(p.y>H+p.r+34){items.splice(i,1);lives--;power=Math.max(0,power-15);boom(W/2,H-70,'#ff4444','¡ESCAPÓ!');if(lives<=0){end();return}}}for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.life-=.035*(dt/16.67);ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,3.5*p.life,0,7);ctx.fill();if(p.life<=0)parts.splice(i,1)}ctx.globalAlpha=1;for(let i=texts.length-1;i>=0;i--){const f=texts[i];f.y-=1.1*(dt/16.67);f.life-=.03*(dt/16.67);ctx.globalAlpha=Math.max(0,f.life);ctx.fillStyle=f.c;ctx.font='900 17px Arial';ctx.textAlign='center';ctx.fillText(f.t,f.x,f.y);if(f.life<=0)texts.splice(i,1)}ctx.globalAlpha=1;power=Math.max(0,power-.018*(dt/16.67));hud();raf=requestAnimationFrame(loop)}
+function startGame(){if(raf)cancelAnimationFrame(raf);score=0;lives=3;power=100;items=[];parts=[];texts=[];spawnMs=900;logoMs=13000;running=true;start.classList.add('hidden');over.classList.add('hidden');hint.classList.remove('hidden');levelText.classList.remove('hidden');last=performance.now();hud();raf=requestAnimationFrame(loop)}
+function end(){running=false;if(raf)cancelAnimationFrame(raf);raf=0;best=Math.max(best,score);localStorage.setItem('ideasBestV2',best);document.getElementById('final').textContent=score;document.getElementById('best').textContent='Récord: '+best;over.classList.remove('hidden');hint.classList.add('hidden');levelText.classList.add('hidden')}
+document.getElementById('playBtn').addEventListener('click',startGame);document.getElementById('againBtn').addEventListener('click',startGame);document.getElementById('shareBtn').addEventListener('click',function(){const msg='Hice '+score+' puntos en 3iDeas Challenge. ¿Podés superarme?';location.href='https://wa.me/?text='+encodeURIComponent(msg)});hud();
+})();
+</script>
+</body>
+</html>
